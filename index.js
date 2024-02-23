@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const cors = require("cors");
-const BidItems = require("./models/bidModel");
+const BidItems = require("./models/bidItemModel");
 const morgan = require("morgan");
 require("dotenv").config();
 
@@ -21,9 +21,9 @@ app.use(userRoutes);
 const adminRoutes = require("./routes/adminRoutes");
 app.use(adminRoutes);
 
+
+
 //find the highest bidder and highest bid amount
-
-
 
 const findHighestBidderAndAmount = async () => {
   const bids = await BidItems.find({}).populate("bidders").exec();

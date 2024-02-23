@@ -5,16 +5,16 @@ const biddingitemSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        // required: true,
+        required: true,
       },
     itemName:{
         type:String,
-        // required:true
+        required:true
       
     },
     basePrice:{
         type:Number,
-        // required:true
+        required:true
     },
     images:{
         type:Array
@@ -32,9 +32,11 @@ const biddingitemSchema = new mongoose.Schema({
     },
     highestBidAmount:{
         type:Number
-    }, startTime: { 
+    }, 
+    startTime: { 
         type: Date,
-        default: Date.now },
+        default: Date.now 
+    },
 })
 
 

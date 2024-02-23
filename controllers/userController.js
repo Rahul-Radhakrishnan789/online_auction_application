@@ -1,15 +1,21 @@
 const User = require("../models/userModel");
-const BidItems = require('../models/bidModel')
+const BidItems = require("../models/bidItemModel");
 const Bid = require("../models/biddingModel");
 
 const bcrypt = require("bcrypt");
 
 const jwt = require("jsonwebtoken");
 
+const validation = require("../middlewares/schemaValidation");
+
 //user registration
 
 const userRegister = async (req, res) => {
-  const { password, email } = req.body;
+  const { value, error } = validation.userjoi.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+  const { password, email } = value;
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -29,7 +35,11 @@ const userRegister = async (req, res) => {
 // user login
 
 const userLogin = async (req, res) => {
-  const { email, password } = req.body;
+  const { value, error } = validation.userjoi.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+  const { password, email } = value;
 
   const user = await User.findOne({ email: email });
 
@@ -40,7 +50,7 @@ const userLogin = async (req, res) => {
     return res.status(401).json({ error: "Invalid password" });
   }
 
-  const token = jwt.sign({ userName: user.userName }, "rahul"); //{expiresIn:500}//seconds
+  const token = jwt.sign({ userName: user.userName }, "rahul"); //{expiresIn:500} seconds
 
   res.json({
     status: "success",
@@ -52,60 +62,58 @@ const userLogin = async (req, res) => {
   });
 };
 
-
 //placing a bid
 
 const placeBid = async (req, res) => {
-  const {  amount } = req.body;
+  const { amount } = req.body;
   const userId = req.params.userId;
-  const itemId = req.params.itemId
-
- 
+  const itemId = req.params.itemId;
 
   const itemData = await BidItems.findById(itemId).populate().exec();
 
- 
   if (!itemData) {
     return res.status(404).json({
       status: "failure",
       message: "Item not found",
     });
   }
-  if(amount < itemData.basePrice){
+  if (amount < itemData.basePrice) {
     return res.status(404).json({
-        status: "failure",
-        message: "amount should never get less than baseprice",
-      });
-  }  
+      status: "failure",
+      message: "amount should never get less than baseprice",
+    });
+  }
 
   const getRemainingTime = (startTime, auctionDuration) => {
     const currentTime = new Date();
-    const endTime = new Date(startTime.getTime() + auctionDuration * 60000); 
-    return Math.max(0, endTime - currentTime); 
+    const endTime = new Date(startTime.getTime() + auctionDuration * 60000);
+    return Math.max(0, endTime - currentTime);
   };
-  const remainingTime = getRemainingTime(itemData.startTime, itemData.auctionDuration);
+  const remainingTime = getRemainingTime(
+    itemData.startTime,
+    itemData.auctionDuration
+  );
   if (remainingTime !== 0) {
-  const newBid = new Bid({
-    userId,
-    amount,
-  });
+    const newBid = new Bid({
+      userId,
+      amount,
+    });
 
-  await newBid.save();
+    await newBid.save();
 
-  res.status(201).json({
-    status: "success",
-    message: "bidding succesful",
-    data: newBid,
-  });
-}
+    res.status(201).json({
+      status: "success",
+      message: "bidding succesful",
+      data: newBid,
+    });
+  }
 };
 
 //list items for auction
 
 const addForAuction = async (req, res) => {
-    
   const { itemName, basePrice, auctionDuration, images } = req.body;
- 
+
   const userId = req.params.userId;
 
   const newItem = new BidItems({
@@ -120,11 +128,9 @@ const addForAuction = async (req, res) => {
   res.status(201).json({ message: "Item listed for auction successfully" });
 };
 
-
-
 module.exports = {
   userRegister,
   userLogin,
   placeBid,
-  addForAuction
+  addForAuction,
 };
